@@ -1,7 +1,7 @@
 {
   "name": "@ts-cord/group",
-  "version": "1.0.0",
-  "description": "Base for all TypeScript projects",
+  "version": "0.0.1",
+  "description": "A powerful set of utility data structures that extends Map.",
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx src/index.ts",
@@ -9,7 +9,7 @@
     "lint:fix": "eslint src --fix"
   },
   "keywords": [],
-  "author": "",
+  "author": "escoteiros",
   "license": "ISC",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.60.1",
@@ -17,5 +17,13 @@
     "eslint": "^8.43.0",
     "tsx": "^3.12.7",
     "typescript": "^5.1.6"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ts-cord/group.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ts-cord/group/issues"
+  },
+  "homepage": "https://github.com/ts-cord/group#readme"
 }
