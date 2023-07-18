@@ -1,8 +1,8 @@
 {
-  "name": "base",
+  "name": "@ts-cord/group",
   "version": "1.0.0",
   "description": "Base for all TypeScript projects",
-  "main": "index.ts",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "tsx src/index.ts",
     "test": "tsx index.test.ts",
