@@ -1,4 +1,4 @@
-import { GroupError } from './group-error';
+import { GroupError, GreaterThan } from './utils';
 
 /**
  * Group is an extension of the native Map. It is used in tscord for groups that contain items with IDs.
@@ -10,7 +10,7 @@ export class Group<K, V> extends Map<K, V> {
 
     /**
      * Equals to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map/forEach Map.forEach}, but returns the group instead of undefined.
-     * @param fn Function to executein each element.
+     * @param fn Function to execute in each element.
      * @returns {this}
      */
     public each(fn: (value: V, key: K, group: this) => void): this {
@@ -25,7 +25,7 @@ export class Group<K, V> extends Map<K, V> {
 
     /**
      * Searches for the first element that satisfies the `fn` function. This is like {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/find Array.find}.
-     * @param fn - Function to test (should return a boolean value)
+     * @param fn Function to test (should return a boolean value)
      * @returns {this}
      */
     public find<S extends V>(fn: (value: V, key: K, group: this) => value is S): V | undefined {
@@ -41,7 +41,7 @@ export class Group<K, V> extends Map<K, V> {
 
     /**
      * Equals to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter Array.filter}, but returns a Group instead of Array.
-     * @param fn - Function to test (should return a boolean value)
+     * @param fn Function to test (should return a boolean value)
      * @returns {this}
      */
     public filter<S extends V>(fn: (value: V, key: K, group: this) => value is S): Group<K, V> {
@@ -60,7 +60,7 @@ export class Group<K, V> extends Map<K, V> {
 
     /**
      * Equals to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Map Array.Map}, but returns a Group instead of `V[]`.
-     * @param fn 
+     * @param fn Function to map each element.
      * @returns {this}
      */
     public map(fn: (value: V, key: K, group: this) => unknown): Group<K, unknown> {
@@ -76,6 +76,12 @@ export class Group<K, V> extends Map<K, V> {
 
         return mappedMap;
     }
+
+    /**
+     * Searches for the first key that satisfies the `fn` function. Equals to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findIndex Array.findIndex}.
+     * @param fn Function to test with.
+     * @returns {K | undefined}
+     */
     public findKey(fn: (value: V, key: K, group: this) => unknown): K | undefined {
         if (typeof fn !== 'function') throw new GroupError('fn parameter must be a valid function.', { cause: fn });
 
@@ -88,23 +94,29 @@ export class Group<K, V> extends Map<K, V> {
     }
 
     /**
-     * Gets the first element value in this Group.
-     * @returns {V | undefined}
+     * Gets the first element value in this group.
+     * @param {A} amount Amount of elements to returns.
+     * @returns {A extends number ? (GreaterThan<A, 1> extends true ? V[] : V) : V}
      */
-    public first(): V | undefined {
-        return [...this.values()][0];
+    public first<A extends number | undefined = undefined>(amount?: A): A extends number ? (GreaterThan<A, 1> extends true ? V[] : V) : V {
+        const values = [...this.values()];
+
+        return (typeof amount === 'number' && amount > 1 ? values.slice(0, amount) : values[0]) as A extends number ? GreaterThan<A, 1> extends true ? V[] : V : V;
     }
 
     /**
-     * Gets the last element value in this Group.
-     * @returns {V | undefined}
+     * Gets the last element value in this group.
+     * @param {A} amount Amount of elements to returns.
+     * @returns {A extends number ? (GreaterThan<A, 1> extends true ? V[] : V) : V}
      */
-    public last(): V | undefined {
-        return [...this.values()][this.size - 1];
+    public last<A extends number | undefined = undefined>(amount?: A): A extends number ? (GreaterThan<A, 1> extends true ? V[] : V) : V {
+        const values = [...this.values()];
+
+        return (typeof amount === 'number' && amount > 1 ? values.slice(values.length - amount) : values[values.length - 1]) as A extends number ? (GreaterThan<A, 1> extends true ? V[] : V) : V;
     }
 
     /**
-     * Checks if all items passes a test. . Equals to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Every Array.every}.
+     * Checks if all items passes a test. Equals to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Every Array.every}.
      * @param fn Function used to test.
      * @returns {boolean}
      */
@@ -136,18 +148,18 @@ export class Group<K, V> extends Map<K, V> {
     }
 
     /**
-     * Checks if all of the items has in this Group.
+     * Checks if all of the items has in this group.
      * @param {K[]} keys - Keys to check for.
      * @returns {boolean}
      */
     public hasAll(keys: K[]): boolean {
         if (!Array.isArray(keys)) throw new GroupError('Invalid keys parameter. Expected an array of keys.', { cause: keys });
 
-        return keys.every((key) => super.has(key));
+        return keys.every((key) => super.has(key)) as boolean;
     }
 
     /**
-     * Checks if any of the items has in this Group.
+     * Checks if any of the items has in this group.
      * @param {K[]} keys - Keys to check for.
      * @returns {boolen}
      */
@@ -177,28 +189,66 @@ export class Group<K, V> extends Map<K, V> {
                 this.delete(key);
             }
         }
+
         return this;
     }
 
     /**
      * Equals to {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/At Array.at}. Returns the item at a given index.
-     * @param {number} index 
+     * @param {number} index - Index of the element to get.
      * @returns {V | undefined}
      */
     public at(index: number): V | undefined {
-        if (!Number.isInteger(index)) throw new GroupError('Invalid index parameter. Expected an integer number.', { cause: index });
+        if (typeof index !== 'number') throw new GroupError('Invalid index parameter. Expected a number.', { cause: index });
 
         return [...this.values()].at(index);
     }
 
     /**
      * Gets the key at the given index.
-     * @param {number} index 
+     * @param {number} index - Index of the key to get.
      * @returns {K | undefined}
      */
     public keyAt(index: number): K | undefined {
-        if (!Number.isInteger(index)) throw new GroupError('Invalid index parameter. Expected an integer number.', { cause: index });
+        if (typeof index !== 'number') throw new GroupError('Invalid index parameter. Expected a number.', { cause: index });
 
         return [...this.keys()].at(index);
+    }
+
+    /**
+     * Gets the value from `K2` key, or sets if not exists.
+     * @param key Key to get if exists, set otherwise.
+     * @param generator Generator function to generate the value.
+     * @example
+     * const someGroup = new Group();
+     *     .fallback(someId, () => someObject);
+     * @returns {V}
+     */
+    public fallback<K2 extends K>(key: K2, generator: (key: K2, group: this) => V): V {
+        if (typeof generator !== 'function') throw new GroupError('generator parameter must be a valid function', { cause: generator });
+
+        if (this.has(key)) return this.get(key) as V;
+
+        return this.set(key, generator(key, this)).get(key) as V;
+    }
+
+    /**
+     * Combines one or more Groups with the current group.
+     * @param groups Groups to be concatenated.
+     * @example
+     * const someGroup = new Group()
+     *     .concat(otherGroup, andOther);
+     * @returns {this}
+     */
+    public concact(...groups: Group<K, V>[]): this {
+        if (!Array.isArray(groups) || !groups.every((value) => value instanceof Group)) throw new GroupError('Invalid ...groups parameter. Expected a rest of groups.', { cause: groups });
+
+        for (const group of groups) {
+            for (const [key, value] of group) {
+                this.set(key, value);
+            }
+        }
+
+        return this;
     }
 }
